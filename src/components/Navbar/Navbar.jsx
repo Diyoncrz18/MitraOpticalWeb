@@ -5,10 +5,10 @@ import { Link } from "react-scroll";
 import DarkMode from "./DarkMode";
 
 const MenuLinks = [
-  { id: 1, name: "Home", link: "home" },
-  { id: 2, name: "Shop", link: "shop" },
-  { id: 3, name: "Footer", link: "footer" },
-  { id: 4, name: "Blogs", link: "blogs" },
+  { id: 1, name: "Beranda", link: "home" },
+  { id: 2, name: "Toko ", link: "shop" },
+  { id: 3, name: "Blog ", link: "footer" },
+  { id: 4, name: "Dokumentasi", link: "blogs" },
 ];
 
 const Navbar = ({ cartCount, cartItems, handleOrderPopup, removeFromCart }) => {
@@ -31,7 +31,7 @@ const Navbar = ({ cartCount, cartItems, handleOrderPopup, removeFromCart }) => {
               href="#"
               className="text-primary font-semibold tracking-widest text-2xl uppercase sm:text-3xl"
             >
-              Eshop
+              m-optical
             </a>
             {/* Menu Items */}
             <div className="hidden lg:block">

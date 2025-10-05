@@ -11,23 +11,23 @@ const HeroData = [
   {
     id: 1,
     img: Image1,
-    subtitle: "Beats Solo",
-    title: "Wireless",
-    title2: "Headphone",
+    subtitle: "Rekomendasi Kacamata",
+    title: "Ray ban",
+    title2: "GLASSES",
   },
   {
     id: 2,
     img: Image2,
-    subtitle: "Beats Solo",
-    title: "Wireless",
-    title2: "Virtual",
+    subtitle: "Rekomendasi Kacamata",
+    title: "Ted Baker",
+    title2: "GLASSES",
   },
   {
     id: 3,
     img: Image3,
-    subtitle: "Beats Solo",
-    title: "Branded",
-    title2: "Laptops",
+    subtitle: "Rekomendasi Kacamata",
+    title: "Teg Heuer",
+    title2: "GLASSES",
   },
 ];
 
@@ -37,7 +37,7 @@ const Hero = ({ handleOrderPopup }) => {
     arrows: false,
     infinite: true,
     speed: 800,
-    slidesToScroll: 1,
+    slidesToScroll: 1,  
     autoplaySpeed: 4000,
     cssEase: "ease-in-out",
     pauseOnHover: false,
@@ -78,7 +78,7 @@ const Hero = ({ handleOrderPopup }) => {
                     </h1>
                     <div className="w-auto">
                       <Button
-                        text="Shop By Category "
+                        text="Belanja Sekarang"
                         bgColor=" bg-primary"
                         textColor="text-white"
                         handler={handleOrderPopup}

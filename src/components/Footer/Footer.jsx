@@ -9,12 +9,8 @@ import {
 
 const FooterLinks = [
   {
-    title: "Home",
+    title: "Beranda",
     link: "/#",
-  },
-  {
-    title: "About",
-    link: "/#about",
   },
   {
     title: "Contact",
@@ -39,26 +35,26 @@ const Footer = () => {
               className="text-primary font-semibold tracking-widest text-2xl uppercase sm:text-3xl
 "
             >
-              Eshop
+              MITRA OPTICAL
             </a>
             {
               <p className="text-gray-600 dark:text-white/70  lg:pr-24 pt-3">
-                Lorem ipsum dolor sit, amet consectetur adipisicing elit.
-                Maiores alias cum
+                Tempat terbaik untuk menemukan kacamata bergaya dan lensa berkualitas tinggi. <br />
+Kami membantu Anda melihat dunia dengan lebih jelas dan percaya diri.
               </p>
             }
             {
               <p className="text-gray-500 mt-4">
-                Made with 💖 by The Coding Journey
+                Dibuat dengan ❤️ oleh Tim Mitra Optical
               </p>
             }
             {
               <a
-                href=""
+                href="https://www.instagram.com/mitra_mobileoptical/"
                 target="_blank"
                 className="inline-block bg-primary/90 text-white py-2 px-4 mt-4 text-sm rounded-full"
               >
-                Visit our YouTube Channel
+                Kunjungi Instagram kami
               </a>
             }
           </div>
@@ -103,31 +99,31 @@ const Footer = () => {
 
             {/* Company Address */}
             <div className="py-8 px-4 col-span-2 sm:col-auto">
-              <h1 className="text-xl font-bold sm:text-left mb-3">Address</h1>
+              <h1 className="text-xl font-bold sm:text-left mb-3">Alamat</h1>
               <div>
                 {
                   <div className="flex items-center gap-3">
                     <FaLocationArrow />
-                    <p>Kashif Hussain </p>
+                    <p>Novaldy Katiandagho</p>
                   </div>
                 }
                 {
                   <div className="flex items-center gap-3 mt-6">
                     <FaMobileAlt />
-                    <p>+91-3129776466</p>
+                    <p>+62 822-6158-5820</p>
                   </div>
                 }
 
                 <div className="flex items-center gap-3 mt-6">
                   <a
-                    href="https://www.instagram.com/kashif_dayal_313/"
+                    href="https://www.instagram.com/mitra_mobileoptical/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <FaInstagram className="text-3xl hover:text-primary duration-300" />
                   </a>
                   <a
-                    href="https://www.facebook.com/profile.php?id=100072035328558"
+                    href="https://www.facebook.com/share/1CfFTFEjct/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -138,7 +134,6 @@ const Footer = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <FaLinkedin className="text-3xl hover:text-primary duration-200" />
                   </a>
                 </div>
               </div>

@@ -5,38 +5,39 @@ import Category from "./components/Category/Category";
 import Category2 from "./components/Category/Category2";
 import Banner from "./components/Banner/Banner";
 import Products from "./components/Products/Products";
+
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import headphone from "./assets/hero/headphone.png";
-import watch from "./assets/hero/watch.png";
+import watch from "./assets/category/macbook.png";
 import Blogs from "./components/Blogs/Blogs";
 import Partners from "./components/Partners/Partners";
 import Footer from "./components/Footer/Footer";
 
 const BannerData = {
-  discount: "30% OFF",
-  title: "Fine Smile",
-  date: "10 Jan to 28 Jan",
+  discount: "Hemat 10%",
+  title: "Ray Ban",
+  date: "10 Jan - 28 Jan",
   image: headphone,
-  title2: "Air Solo Bass",
-  title3: "Winter Sale",
+  title2: "Produk Terlaris",
+  title3: "Penawaran Terbatas",
   title4:
-    "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eaque reiciendis",
+    "Tampil keren dan percaya diri dengan koleksi terbaru kami. Belanja sekarang!",
   bgColor: "#f42c37",
 };
 
 const BannerData2 = {
-  discount: "30% OFF",
-  title: "Happy Hours",
-  date: "14 Jan to 28 Jan",
+  discount: "Hemat 20%",
+  title: "Teg Heuer",
+  date: "10 Jan - 28 Jan",
   image: watch,
-  title2: "Smart Solo",
-  title3: "Winter Sale",
+  title2: "Produk Terlaris",
+  title3: "Penawaran Terbatas",
   title4:
-    "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eaque reiciendis",
+    "Tampil keren dan percaya diri bersama Mitra Optical!",
   bgColor: "#2dcc6f",
 };
 
@@ -152,7 +153,7 @@ const App = () => {
       />
       <Banner data={BannerData2} />
       <Blogs />
-      <Partners />
+      {/* <Partners /> */}
       <Footer />
     </div>
   );

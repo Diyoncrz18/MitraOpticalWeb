@@ -10,7 +10,7 @@ const Banner = ({ data }) => {
         >
           {/* First Column */}
           <div className="p-6 sm:p-8">
-            <p data-aos="slide-right" className="text-sm">
+            <p data-aos="slide-right" className="text-sm">  
               {data.discount}
             </p>
             <h1
@@ -46,7 +46,7 @@ const Banner = ({ data }) => {
                 style={{ color: data.bgColor }}
                 className="bg-white py-2 px-4 rounded-full"
               >
-                Shop Now
+                Belanja Sekarang
               </button>
             </div>
           </div>

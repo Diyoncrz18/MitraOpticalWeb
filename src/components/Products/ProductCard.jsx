@@ -27,9 +27,16 @@ const ProductCard = ({ data, handleOrderPopup }) => {
                 />
               </div>
             </div>
+
             <div className="leading-7">
               <h2 className="font-semibold">{item.title}</h2>
-              <h2 className="font-bold">${item.price}</h2>
+              <h2 className="font-bold">
+                {new Intl.NumberFormat("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                  minimumFractionDigits: 0,
+                }).format(item.price)}
+              </h2>
             </div>
           </div>
         ))}
