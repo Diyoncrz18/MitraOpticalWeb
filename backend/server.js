@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/mongodb.js";
+import connectCloudinary from "./config/claudinary.js"; // ✅ sudah benar
+import uploadRoutes from "./routes/uploadRoutes.js";
+
 
 dotenv.config();
 const app = express();
@@ -17,8 +20,13 @@ app.get("/", (req, res) => {
 });
 
 const startServer = async () => {
-  await connectDB(); // Connect to MongoDB
+  await connectDB(); // 🧠 Connect MongoDB
+  await connectCloudinary(); // ☁️ Connect Cloudinary
   app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 };
+
+
+app.use("/api/upload", uploadRoutes);
+
 
 startServer();
