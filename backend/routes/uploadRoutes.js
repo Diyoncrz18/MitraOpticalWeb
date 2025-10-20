@@ -1,30 +1,43 @@
 import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+import streamifier from "streamifier"; // ⬅️ ini penting untuk kirim buffer ke stream
 
 const router = express.Router();
 
-// Konfigurasi multer (menyimpan file sementara di folder 'uploads')
-const upload = multer({ dest: "uploads/" });
+// setup multer untuk menerima file dari form-data (langsung di memory)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// Endpoint upload file
-router.post("/", upload.single("image"), async (req, res) => {
+// endpoint POST /upload
+router.post("/", upload.single("file"), async (req, res) => {
   try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "mitra_optical", // nama folder di Cloudinary
-    });
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-    // Hapus file sementara dari server
-    fs.unlinkSync(req.file.path);
+    // Upload ke Cloudinary pakai Promise agar bisa ditunggu (await)
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "uploads" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      // Kirim file buffer ke Cloudinary
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
 
     res.status(200).json({
-      message: "Upload berhasil!",
-      url: result.secure_url,
-      public_id: result.public_id,
+      message: "Upload success",
+      url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Gagal upload", error: error.message });
+  } catch (err) {
+    console.error("Upload Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
