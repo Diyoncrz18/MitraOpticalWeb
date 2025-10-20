@@ -12,12 +12,6 @@ const connectCloudinary = async () => {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
-    // Tes koneksi dengan upload dummy (optional)
-    const result = await cloudinary.uploader.upload(
-      "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      { folder: "test_connection", public_id: "connection_check" }
-    );
-
     console.log("☁️  Cloudinary connected successfully!");
     console.log("🖼️  Test upload URL:", result.secure_url);
   } catch (err) {
@@ -25,4 +19,4 @@ const connectCloudinary = async () => {
   }
 };
 
-export default connectCloudinary;
+export default connectCloudinary;   
