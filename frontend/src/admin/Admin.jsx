@@ -18,6 +18,7 @@ const Admin = () => {
   });
 
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showProductModal, setShowProductModal] = useState(false);
 
   // === STATE DOKUMENTASI ===
   const [docs, setDocs] = useState([
@@ -37,6 +38,7 @@ const Admin = () => {
   });
 
   const [editingDoc, setEditingDoc] = useState(null);
+  const [showDocModal, setShowDocModal] = useState(false);
 
   // --- PRODUK ---
   const handleAddProduct = (e) => {
@@ -53,6 +55,7 @@ const Admin = () => {
     };
     setProducts([...products, product]);
     setNewProduct({ title: "", price: "", img: "" });
+    setShowProductModal(false);
   };
 
   const handleUpdateProduct = (e) => {
@@ -69,6 +72,7 @@ const Admin = () => {
       )
     );
     setEditingProduct(null);
+    setShowProductModal(false);
   };
 
   const handleDeleteProduct = (id) => {
@@ -91,6 +95,7 @@ const Admin = () => {
     };
     setDocs([...docs, doc]);
     setNewDoc({ title: "", subtitle: "", image: "" });
+    setShowDocModal(false);
   };
 
   const handleUpdateDoc = (e) => {
@@ -101,11 +106,33 @@ const Admin = () => {
     }
     setDocs(docs.map((d) => (d.id === editingDoc.id ? { ...editingDoc } : d)));
     setEditingDoc(null);
+    setShowDocModal(false);
   };
 
   const handleDeleteDoc = (id) => {
     setDocs(docs.filter((d) => d.id !== id));
     if (editingDoc && editingDoc.id === id) setEditingDoc(null);
+  };
+
+  // Fungsi pembantu untuk membuka modal
+  const openProductModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+    } else {
+      setEditingProduct(null);
+      setNewProduct({ title: "", price: "", img: "" });
+    }
+    setShowProductModal(true);
+  };
+
+  const openDocModal = (doc = null) => {
+    if (doc) {
+      setEditingDoc(doc);
+    } else {
+      setEditingDoc(null);
+      setNewDoc({ title: "", subtitle: "", image: "" });
+    }
+    setShowDocModal(true);
   };
 
   return (
@@ -117,85 +144,14 @@ const Admin = () => {
 
         {/* === BAGIAN PRODUK === */}
         <section className="mb-16">
-          <h2 className="text-2xl font-semibold mb-6">Kelola Produk</h2>
-
-          {/* Form Tambah/Edit Produk */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
-            <h3 className="text-lg font-medium mb-4">
-              {editingProduct ? "Edit Produk" : "Tambah Produk Baru"}
-            </h3>
-            <form
-              onSubmit={editingProduct ? handleUpdateProduct : handleAddProduct}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Kelola Produk</h2>
+            <button
+              onClick={() => openProductModal()}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
             >
-              <input
-                type="text"
-                placeholder="Nama Produk"
-                value={editingProduct ? editingProduct.title : newProduct.title}
-                onChange={(e) =>
-                  editingProduct
-                    ? setEditingProduct({
-                        ...editingProduct,
-                        title: e.target.value,
-                      })
-                    : setNewProduct({ ...newProduct, title: e.target.value })
-                }
-                className="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-              />
-              <input
-                type="number"
-                placeholder="Harga (angka saja)"
-                value={editingProduct ? editingProduct.price : newProduct.price}
-                onChange={(e) =>
-                  editingProduct
-                    ? setEditingProduct({
-                        ...editingProduct,
-                        price: e.target.value,
-                      })
-                    : setNewProduct({ ...newProduct, price: e.target.value })
-                }
-                className="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      if (editingProduct) {
-                        setEditingProduct({
-                          ...editingProduct,
-                          img: reader.result,
-                        });
-                      } else {
-                        setNewProduct({ ...newProduct, img: reader.result });
-                      }
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="dark:bg-gray-700"
-              />
-              <div className="md:col-span-3 flex gap-3">
-                <button
-                  type="submit"
-                  className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
-                >
-                  {editingProduct ? "Simpan Perubahan" : "Tambah Produk"}
-                </button>
-                {editingProduct && (
-                  <button
-                    type="button"
-                    onClick={() => setEditingProduct(null)}
-                    className="bg-gray-500 text-white px-4 py-2 rounded"
-                  >
-                    Batal
-                  </button>
-                )}
-              </div>
-            </form>
+              + Tambah Produk
+            </button>
           </div>
 
           {/* Daftar Produk */}
@@ -221,7 +177,7 @@ const Admin = () => {
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
-                      onClick={() => setEditingProduct(product)}
+                      onClick={() => openProductModal(product)}
                       className="text-blue-600 dark:text-blue-400 text-sm"
                     >
                       Edit
@@ -241,76 +197,14 @@ const Admin = () => {
 
         {/* === BAGIAN DOKUMENTASI === */}
         <section>
-          <h2 className="text-2xl font-semibold mb-6">Kelola Dokumentasi</h2>
-
-          {/* Form Tambah/Edit Dokumentasi */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-8">
-            <h3 className="text-lg font-medium mb-4">
-              {editingDoc ? "Edit Dokumentasi" : "Tambah Dokumentasi Baru"}
-            </h3>
-            <form
-              onSubmit={editingDoc ? handleUpdateDoc : handleAddDoc}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Kelola Dokumentasi</h2>
+            <button
+              onClick={() => openDocModal()}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
             >
-              <input
-                type="text"
-                placeholder="Judul"
-                value={editingDoc ? editingDoc.title : newDoc.title}
-                onChange={(e) =>
-                  editingDoc
-                    ? setEditingDoc({ ...editingDoc, title: e.target.value })
-                    : setNewDoc({ ...newDoc, title: e.target.value })
-                }
-                className="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600 md:col-span-2"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      if (editingDoc) {
-                        setEditingDoc({ ...editingDoc, image: reader.result });
-                      } else {
-                        setNewDoc({ ...newDoc, image: reader.result });
-                      }
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="dark:bg-gray-700"
-              />
-              <textarea
-                placeholder="Deskripsi"
-                value={editingDoc ? editingDoc.subtitle : newDoc.subtitle}
-                onChange={(e) =>
-                  editingDoc
-                    ? setEditingDoc({ ...editingDoc, subtitle: e.target.value })
-                    : setNewDoc({ ...newDoc, subtitle: e.target.value })
-                }
-                rows="3"
-                className="px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600 md:col-span-2"
-              />
-              <div className="md:col-span-2 flex gap-3">
-                <button
-                  type="submit"
-                  className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
-                >
-                  {editingDoc ? "Simpan Perubahan" : "Tambah Dokumentasi"}
-                </button>
-                {editingDoc && (
-                  <button
-                    type="button"
-                    onClick={() => setEditingDoc(null)}
-                    className="bg-gray-500 text-white px-4 py-2 rounded"
-                  >
-                    Batal
-                  </button>
-                )}
-              </div>
-            </form>
+              + Tambah Dokumentasi
+            </button>
           </div>
 
           {/* Daftar Dokumentasi */}
@@ -334,7 +228,7 @@ const Admin = () => {
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
-                      onClick={() => setEditingDoc(doc)}
+                      onClick={() => openDocModal(doc)}
                       className="text-blue-600 dark:text-blue-400 text-sm"
                     >
                       Edit
@@ -351,6 +245,187 @@ const Admin = () => {
             ))}
           </div>
         </section>
+
+        {/* === MODAL PRODUK === */}
+        {showProductModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl">
+              <div className="p-6">
+                <h3 className="text-lg font-medium mb-4">
+                  {editingProduct ? "Edit Produk" : "Tambah Produk Baru"}
+                </h3>
+                <form
+                  onSubmit={
+                    editingProduct ? handleUpdateProduct : handleAddProduct
+                  }
+                  className="space-y-4"
+                >
+                  <input
+                    type="text"
+                    placeholder="Nama Produk"
+                    value={
+                      editingProduct ? editingProduct.title : newProduct.title
+                    }
+                    onChange={(e) =>
+                      editingProduct
+                        ? setEditingProduct({
+                            ...editingProduct,
+                            title: e.target.value,
+                          })
+                        : setNewProduct({
+                            ...newProduct,
+                            title: e.target.value,
+                          })
+                    }
+                    className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Harga (angka saja)"
+                    value={
+                      editingProduct ? editingProduct.price : newProduct.price
+                    }
+                    onChange={(e) =>
+                      editingProduct
+                        ? setEditingProduct({
+                            ...editingProduct,
+                            price: e.target.value,
+                          })
+                        : setNewProduct({
+                            ...newProduct,
+                            price: e.target.value,
+                          })
+                    }
+                    className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          if (editingProduct) {
+                            setEditingProduct({
+                              ...editingProduct,
+                              img: reader.result,
+                            });
+                          } else {
+                            setNewProduct({
+                              ...newProduct,
+                              img: reader.result,
+                            });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full dark:bg-gray-700"
+                  />
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
+                    >
+                      {editingProduct ? "Simpan Perubahan" : "Tambah Produk"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowProductModal(false)}
+                      className="bg-gray-500 text-white px-4 py-2 rounded"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* === MODAL DOKUMENTASI === */}
+        {showDocModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl">
+              <div className="p-6">
+                <h3 className="text-lg font-medium mb-4">
+                  {editingDoc ? "Edit Dokumentasi" : "Tambah Dokumentasi Baru"}
+                </h3>
+                <form
+                  onSubmit={editingDoc ? handleUpdateDoc : handleAddDoc}
+                  className="space-y-4"
+                >
+                  <input
+                    type="text"
+                    placeholder="Judul"
+                    value={editingDoc ? editingDoc.title : newDoc.title}
+                    onChange={(e) =>
+                      editingDoc
+                        ? setEditingDoc({
+                            ...editingDoc,
+                            title: e.target.value,
+                          })
+                        : setNewDoc({ ...newDoc, title: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          if (editingDoc) {
+                            setEditingDoc({
+                              ...editingDoc,
+                              image: reader.result,
+                            });
+                          } else {
+                            setNewDoc({ ...newDoc, image: reader.result });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="w-full dark:bg-gray-700"
+                  />
+                  <textarea
+                    placeholder="Deskripsi"
+                    value={editingDoc ? editingDoc.subtitle : newDoc.subtitle}
+                    onChange={(e) =>
+                      editingDoc
+                        ? setEditingDoc({
+                            ...editingDoc,
+                            subtitle: e.target.value,
+                          })
+                        : setNewDoc({ ...newDoc, subtitle: e.target.value })
+                    }
+                    rows="3"
+                    className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
+                    >
+                      {editingDoc ? "Simpan Perubahan" : "Tambah Dokumentasi"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDocModal(false)}
+                      className="bg-gray-500 text-white px-4 py-2 rounded"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

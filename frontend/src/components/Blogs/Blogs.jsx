@@ -1,67 +1,82 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import Heading from "../Shared/Heading";
-import Img1 from "../../assets/blogs/blog-1.jpg";
-import Img2 from "../../assets/blogs/blog-2.jpg";
-import Img3 from "../../assets/blogs/blog-3.jpg";
-
-const BlogData = [
-  {
-    title: "How to choose perfect smartwatch",
-    subtitle:
-      "minima facere deserunt vero illo beatae deleniti eius dolores consequuntur, eligendi corporis maiores molestiae laudantium. Porro?",
-    published: "Jan 20, 2024 by Imran",
-    image: Img1,
-    aosDelay: "0",
-  },
-  {
-    title: "How to choose perfect gadget",
-    subtitle:
-      "minima facere deserunt vero illo beatae deleniti eius dolores consequuntur, eligendi corporis maiores molestiae laudantium. Porro?",
-    published: "Jan 20, 2024 by Amjad",
-    image: Img2,
-    aosDelay: "200",
-  },
-  {
-    title: "How to choose perfect VR headset",
-    subtitle:
-      "minima facere deserunt vero illo beatae deleniti eius dolores consequuntur, eligendi corporis maiores molestiae laudantium. Porro?",
-    published: "Jan 20, 2024 by Rashid",
-    image: Img3,
-    aosDelay: "400",
-  },
-];
 
 const Blogs = () => {
-  return (
-    <div className="my-12" id="blogs"> {/* Added id="blogs" for linking */}
-      <div className="container">
-        {/* Header section */}
-        <Heading title="Dokumentasi" subtitle={"MITRA OPTICAL"} />
+  const [documentations, setDocumentations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-        {/* Blog section */}
+  // 🔹 Ambil data dokumentasi dari backend
+  useEffect(() => {
+    const fetchDocumentations = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/documentations");
+        setDocumentations(res.data);
+      } catch (error) {
+        console.error("Gagal mengambil dokumentasi:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocumentations();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="text-center py-10 text-lg font-medium text-gray-600">
+        Memuat dokumentasi...
+      </div>
+    );
+  }
+
+  if (documentations.length === 0) {
+    return (
+      <div className="text-center py-10 text-lg font-medium text-gray-600">
+        Belum ada dokumentasi yang tersedia.
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-12" id="blogs">
+      <div className="container">
+        <Heading title="Dokumentasi" subtitle="MITRA OPTICAL" />
+
+        {/* Grid dokumentasi */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 gap-y-8 sm:gap-4 md:gap-7">
-          {/* Blog card */}
-          {BlogData.map((data) => (
+          {documentations.map((item) => (
             <div
+              key={item._id}
               data-aos="fade-up"
-              data-aos-delay={data.aosDelay}
-              key={data.title}
-              className="bg-white dark:bg-gray-900"
+              data-aos-delay={item.aosDelay || "0"}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300"
             >
-              {/* image section */}
+              {/* Gambar */}
               <div className="overflow-hidden rounded-2xl mb-2">
                 <img
-                  src={data.image}
-                  alt={data.title}
+                  src={item.imageUrl || item.image || "/default.jpg"}
+                  alt={item.title}
                   className="w-full h-[220px] object-cover rounded-2xl hover:scale-105 duration-500"
                 />
               </div>
-              {/* content section */}
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500">{data.published}</p>
-                <p className="font-bold line-clamp-1">{data.title}</p>
+
+              {/* Isi konten */}
+              <div className="space-y-2 px-2 pb-3">
+                <p className="text-xs text-gray-500">
+                  {item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : ""}
+                </p>
+                <p className="font-bold line-clamp-1">
+                  {item.title || "Tanpa Judul"}
+                </p>
                 <p className="line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
-                  {data.subtitle}
+                  {item.description || "Tidak ada deskripsi."}
                 </p>
               </div>
             </div>
