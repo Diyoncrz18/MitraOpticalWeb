@@ -1,94 +1,88 @@
-import fs from "fs";
-import { v2 as cloudinary } from "cloudinary";
+// backend/controllers/documentationController.js
 import Documentation from "../models/Documentation.js";
 
-/* ===========================================================
-   🟩 CREATE - Tambah dokumentasi baru
-   =========================================================== */
+// ✅ CREATE
 export const createDocumentation = async (req, res) => {
   try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "mitra_optical/docs",
+    const { title, description, imageUrl, publicId } = req.body;
+
+    if (!title || !imageUrl || !publicId) {
+      return res.status(400).json({
+        message: "title, imageUrl, and publicId are required",
+      });
+    }
+
+    const newDoc = new Documentation({
+      title,
+      description: description || "",
+      imageUrl,
+      publicId,
     });
 
-    fs.unlinkSync(req.file.path);
-
-    const doc = new Documentation({
-      title: req.body.title,
-      description: req.body.description,
-      imageUrl: result.secure_url,
-      publicId: result.public_id,
-    });
-
-    await doc.save();
-    res.status(200).json({ message: "Dokumentasi berhasil ditambahkan", doc });
+    const savedDoc = await newDoc.save();
+    res.status(201).json(savedDoc);
   } catch (error) {
-    console.error("CREATE Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Create Documentation Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/* ===========================================================
-   🟨 READ - Ambil semua dokumentasi
-   =========================================================== */
+// ✅ GET ALL
 export const getDocumentations = async (req, res) => {
   try {
     const docs = await Documentation.find().sort({ createdAt: -1 });
     res.status(200).json(docs);
   } catch (error) {
-    console.error("READ Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Get Documentations Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-/* ===========================================================
-   🟦 UPDATE - Edit dokumentasi berdasarkan ID
-   =========================================================== */
+// ✅ UPDATE
 export const updateDocumentation = async (req, res) => {
   try {
-    const doc = await Documentation.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "Data tidak ditemukan" });
+    const { id } = req.params;
+    const { title, description, imageUrl, publicId } = req.body;
 
-    let imageUrl = doc.imageUrl;
-    let publicId = doc.publicId;
-
-    if (req.file) {
-      await cloudinary.uploader.destroy(doc.publicId);
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "mitra_optical/docs",
+    if (!title || !imageUrl || !publicId) {
+      return res.status(400).json({
+        message: "title, imageUrl, and publicId are required",
       });
-      fs.unlinkSync(req.file.path);
-      imageUrl = result.secure_url;
-      publicId = result.public_id;
     }
 
-    doc.title = req.body.title || doc.title;
-    doc.description = req.body.description || doc.description;
-    doc.imageUrl = imageUrl;
-    doc.publicId = publicId;
+    const updatedDoc = await Documentation.findByIdAndUpdate(
+      id,
+      { title, description, imageUrl, publicId },
+      { new: true, runValidators: true }
+    );
 
-    await doc.save();
-    res.status(200).json({ message: "Dokumentasi berhasil diupdate", doc });
+    if (!updatedDoc) {
+      return res.status(404).json({ message: "Documentation not found" });
+    }
+
+    res.status(200).json(updatedDoc);
   } catch (error) {
-    console.error("UPDATE Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Update Documentation Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/* ===========================================================
-   🟥 DELETE - Hapus dokumentasi berdasarkan ID
-   =========================================================== */
+// ✅ DELETE
 export const deleteDocumentation = async (req, res) => {
   try {
-    const doc = await Documentation.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "Data tidak ditemukan" });
+    const { id } = req.params;
+    const deletedDoc = await Documentation.findByIdAndDelete(id);
 
-    await cloudinary.uploader.destroy(doc.publicId);
-    await doc.deleteOne();
+    if (!deletedDoc) {
+      return res.status(404).json({ message: "Documentation not found" });
+    }
 
-    res.status(200).json({ message: "Dokumentasi berhasil dihapus" });
+    // Opsional: Hapus dari Cloudinary (jika butuh)
+    // await cloudinary.uploader.destroy(deletedDoc.publicId);
+
+    res.status(200).json({ message: "Documentation deleted successfully" });
   } catch (error) {
-    console.error("DELETE Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Delete Documentation Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

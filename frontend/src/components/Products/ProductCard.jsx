@@ -10,12 +10,12 @@ const ProductCard = ({ data, handleOrderPopup }) => {
             data-aos="fade-up"
             data-aos-delay={item.aosDelay || "0"}
             className="group"
-            key={item._id || item.id} // ✅ hilangkan warning React
+            key={item._id || item.id}
           >
             <div className="relative">
               <img
-                src={item.image || item.img} // ✅ backend pakai "image"
-                alt={item.name || item.title}
+                src={item.imageUrl || "/placeholder.jpg"} // ✅ DIPERBAIKI
+                alt={item.title || item.name || "Produk"}
                 className="h-[280px] w-[360px] object-cover rounded-md"
               />
               <div className="hidden group-hover:flex absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 h-full w-full text-center group-hover:backdrop-blur-sm justify-center items-center duration-200 rounded-md">
@@ -29,7 +29,7 @@ const ProductCard = ({ data, handleOrderPopup }) => {
             </div>
 
             <div className="leading-7 mt-3 text-center">
-              <h2 className="font-semibold">{item.name || item.title}</h2>
+              <h2 className="font-semibold">{item.title || item.name || "Tanpa Judul"}</h2> {/* ✅ DIPERBAIKI */}
               <h2 className="font-bold">
                 {new Intl.NumberFormat("id-ID", {
                   style: "currency",

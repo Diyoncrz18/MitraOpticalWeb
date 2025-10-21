@@ -1,11 +1,8 @@
-// backend/routes/productRoutes.js
-import express from "express";
+// backend/controllers/productController.js
 import Product from "../models/Product.js";
 
-const router = express.Router();
-
-// ✅ CREATE (Tambah Produk) — TANPA multer
-router.post("/", async (req, res) => {
+// CREATE product
+export const createProduct = async (req, res) => {
   try {
     const { title, price, imageUrl, publicId } = req.body;
 
@@ -16,45 +13,40 @@ router.post("/", async (req, res) => {
       });
     }
 
+    // Pastikan price adalah number
     const priceNum = Number(price);
     if (isNaN(priceNum) || priceNum <= 0) {
       return res.status(400).json({ message: "Price harus berupa angka positif" });
     }
 
-    const product = new Product({
-      title,        // ✅ bukan "name"
+    const newProduct = new Product({
+      title,
       price: priceNum,
-      imageUrl,     // ✅ bukan "image"
+      imageUrl,
       publicId,
     });
 
-    await product.save();
-    res.status(201).json(product);
+    const savedProduct = await newProduct.save();
+    res.status(201).json(savedProduct);
   } catch (error) {
-    console.error("CREATE Product Error:", error);
-    res.status(500).json({
-      message: "Gagal menambahkan produk",
-      error: error.message,
-    });
+    console.error("Create Product Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-});
+};
 
-// ✅ READ
-router.get("/", async (req, res) => {
+// GET all products
+export const getProducts = async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
     res.status(200).json(products);
   } catch (error) {
-    console.error("READ Products Error:", error);
-    res.status(500).json({
-      message: "Gagal mengambil data produk",
-      error: error.message,
-    });
+    console.error("Get Products Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-});
+};
 
-// ✅ UPDATE
-router.put("/:id", async (req, res) => {
+// UPDATE product
+export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, price, imageUrl, publicId } = req.body;
@@ -82,36 +74,24 @@ router.put("/:id", async (req, res) => {
 
     res.status(200).json(updatedProduct);
   } catch (error) {
-    console.error("UPDATE Product Error:", error);
-    res.status(500).json({
-      message: "Gagal memperbarui produk",
-      error: error.message,
-    });
+    console.error("Update Product Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-});
+};
 
-// ✅ DELETE
-router.delete("/:id", async (req, res) => {
+// DELETE product
+export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById(id);
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
-    if (!product) {
+    if (!deletedProduct) {
       return res.status(404).json({ message: "Produk tidak ditemukan" });
     }
 
-    // Opsional: Hapus dari Cloudinary
-    // await cloudinary.uploader.destroy(product.publicId);
-
-    await Product.findByIdAndDelete(id);
     res.status(200).json({ message: "Produk berhasil dihapus" });
   } catch (error) {
-    console.error("DELETE Product Error:", error);
-    res.status(500).json({
-      message: "Gagal menghapus produk",
-      error: error.message,
-    });
+    console.error("Delete Product Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-});
-
-export default router;
+};

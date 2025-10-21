@@ -1,139 +1,294 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Admin = () => {
-  // === STATE PRODUK ===
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      title: "Kacamata Aviator",
-      price: 850000,
-      img: "https://via.placeholder.com/360x280?text=Aviator",
-    },
-  ]);
-
+  // === PRODUK ===
+  const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({
     title: "",
     price: "",
-    img: "",
+    imageFile: null,
   });
-
   const [editingProduct, setEditingProduct] = useState(null);
+  const [productPreview, setProductPreview] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // === STATE DOKUMENTASI ===
-  const [docs, setDocs] = useState([
-    {
-      id: 1,
-      title: "Cara Memilih Kacamata yang Tepat",
-      subtitle:
-        "Panduan lengkap memilih frame sesuai bentuk wajah dan kebutuhan penglihatan.",
-      image: "https://via.placeholder.com/360x220?text=Dokumentasi+1",
-    },
-  ]);
-
+  // === DOKUMENTASI ===
+  const [docs, setDocs] = useState([]);
   const [newDoc, setNewDoc] = useState({
     title: "",
-    subtitle: "",
-    image: "",
+    description: "",
+    imageFile: null,
   });
-
   const [editingDoc, setEditingDoc] = useState(null);
+  const [docPreview, setDocPreview] = useState(null);
   const [showDocModal, setShowDocModal] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+
+  const API_BASE = "http://localhost:5000/api";
+
+  // 🔁 Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [prodRes, docRes] = await Promise.all([
+          axios.get(`${API_BASE}/products`),
+          axios.get(`${API_BASE}/documentations`),
+        ]);
+        setProducts(prodRes.data);
+        setDocs(docRes.data);
+      } catch (err) {
+        console.error("Gagal mengambil data:", err);
+      } finally {
+        setLoadingProducts(false);
+        setLoadingDocs(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // 🔼 Upload image & return { url, publicId }
+  const uploadImage = async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(`${API_BASE}/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return {
+        url: res.data.url,
+        publicId: res.data.publicId, // ✅ camelCase
+      };
+    } catch (err) {
+      console.error("Upload gagal:", err);
+      alert("Gagal mengunggah gambar. Coba lagi.");
+      return null;
+    }
+  };
 
   // --- PRODUK ---
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!newProduct.title || !newProduct.price || !newProduct.img) {
+    if (!newProduct.title || !newProduct.price || !newProduct.imageFile) {
       alert("Semua kolom produk wajib diisi!");
       return;
     }
-    const product = {
-      id: Date.now(),
-      title: newProduct.title,
-      price: Number(newProduct.price),
-      img: newProduct.img,
-    };
-    setProducts([...products, product]);
-    setNewProduct({ title: "", price: "", img: "" });
-    setShowProductModal(false);
+
+    const imageResult = await uploadImage(newProduct.imageFile);
+    if (!imageResult) return;
+
+    try {
+      const productData = {
+        title: newProduct.title,
+        price: Number(newProduct.price),
+        imageUrl: imageResult.url,
+        publicId: imageResult.publicId, // ✅ kirim publicId
+      };
+      const res = await axios.post(`${API_BASE}/products`, productData);
+      setProducts([...products, res.data]);
+      resetProductForm();
+      setShowProductModal(false);
+    } catch (err) {
+      console.error("Gagal tambah produk:", err);
+      alert("Gagal menambah produk. Cek konsol untuk detail.");
+    }
   };
 
-  const handleUpdateProduct = (e) => {
+  const handleUpdateProduct = async (e) => {
     e.preventDefault();
-    if (!editingProduct.title || !editingProduct.price || !editingProduct.img) {
-      alert("Semua kolom wajib diisi!");
+    if (!editingProduct.title || !editingProduct.price) {
+      alert("Judul dan harga wajib diisi!");
       return;
     }
-    setProducts(
-      products.map((p) =>
-        p.id === editingProduct.id
-          ? { ...editingProduct, price: Number(editingProduct.price) }
-          : p
-      )
-    );
-    setEditingProduct(null);
-    setShowProductModal(false);
+
+    let imageUrl = editingProduct.imageUrl;
+    let publicId = editingProduct.publicId;
+
+    if (editingProduct.imageFile) {
+      const imageResult = await uploadImage(editingProduct.imageFile);
+      if (!imageResult) return;
+      imageUrl = imageResult.url;
+      publicId = imageResult.publicId;
+    }
+
+    try {
+      const updatedData = {
+        title: editingProduct.title,
+        price: Number(editingProduct.price),
+        imageUrl,
+        publicId,
+      };
+      const res = await axios.put(
+        `${API_BASE}/products/${editingProduct._id}`,
+        updatedData
+      );
+      setProducts(
+        products.map((p) => (p._id === editingProduct._id ? res.data : p))
+      );
+      resetProductForm();
+      setShowProductModal(false);
+    } catch (err) {
+      console.error("Gagal update produk:", err);
+      alert("Gagal memperbarui produk.");
+    }
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts(products.filter((p) => p.id !== id));
-    if (editingProduct && editingProduct.id === id) setEditingProduct(null);
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm("Yakin hapus produk ini?")) return;
+    try {
+      await axios.delete(`${API_BASE}/products/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
+    } catch (err) {
+      console.error("Gagal hapus produk:", err);
+      alert("Gagal menghapus produk.");
+    }
   };
 
   // --- DOKUMENTASI ---
-  const handleAddDoc = (e) => {
+  const handleAddDoc = async (e) => {
     e.preventDefault();
-    if (!newDoc.title || !newDoc.subtitle || !newDoc.image) {
+    if (!newDoc.title || !newDoc.description || !newDoc.imageFile) {
       alert("Semua kolom dokumentasi wajib diisi!");
       return;
     }
-    const doc = {
-      id: Date.now(),
-      title: newDoc.title,
-      subtitle: newDoc.subtitle,
-      image: newDoc.image,
-    };
-    setDocs([...docs, doc]);
-    setNewDoc({ title: "", subtitle: "", image: "" });
-    setShowDocModal(false);
+
+    const imageResult = await uploadImage(newDoc.imageFile);
+    if (!imageResult) return;
+
+    try {
+      const docData = {
+        title: newDoc.title,
+        description: newDoc.description,
+        imageUrl: imageResult.url,
+        publicId: imageResult.publicId, // ✅ wajib!
+      };
+      const res = await axios.post(`${API_BASE}/documentations`, docData);
+      setDocs([...docs, res.data]);
+      resetDocForm();
+      setShowDocModal(false);
+    } catch (err) {
+      console.error("Gagal tambah dokumentasi:", err);
+      alert("Gagal menambah dokumentasi. Cek konsol untuk detail.");
+    }
   };
 
-  const handleUpdateDoc = (e) => {
+  const handleUpdateDoc = async (e) => {
     e.preventDefault();
-    if (!editingDoc.title || !editingDoc.subtitle || !editingDoc.image) {
-      alert("Semua kolom wajib diisi!");
+    if (!editingDoc.title || !editingDoc.description) {
+      alert("Judul dan deskripsi wajib diisi!");
       return;
     }
-    setDocs(docs.map((d) => (d.id === editingDoc.id ? { ...editingDoc } : d)));
+
+    let imageUrl = editingDoc.imageUrl;
+    let publicId = editingDoc.publicId;
+
+    if (editingDoc.imageFile) {
+      const imageResult = await uploadImage(editingDoc.imageFile);
+      if (!imageResult) return;
+      imageUrl = imageResult.url;
+      publicId = imageResult.publicId;
+    }
+
+    try {
+      const updatedData = {
+        title: editingDoc.title,
+        description: editingDoc.description,
+        imageUrl,
+        publicId,
+      };
+      const res = await axios.put(
+        `${API_BASE}/documentations/${editingDoc._id}`,
+        updatedData
+      );
+      setDocs(docs.map((d) => (d._id === editingDoc._id ? res.data : d)));
+      resetDocForm();
+      setShowDocModal(false);
+    } catch (err) {
+      console.error("Gagal update dokumentasi:", err);
+      alert("Gagal memperbarui dokumentasi.");
+    }
+  };
+
+  const handleDeleteDoc = async (id) => {
+    if (!window.confirm("Yakin hapus dokumentasi ini?")) return;
+    try {
+      await axios.delete(`${API_BASE}/documentations/${id}`);
+      setDocs(docs.filter((d) => d._id !== id));
+    } catch (err) {
+      console.error("Gagal hapus dokumentasi:", err);
+      alert("Gagal menghapus dokumentasi.");
+    }
+  };
+
+  // --- UTILS ---
+  const resetProductForm = () => {
+    setNewProduct({ title: "", price: "", imageFile: null });
+    setEditingProduct(null);
+    setProductPreview(null);
+  };
+
+  const resetDocForm = () => {
+    setNewDoc({ title: "", description: "", imageFile: null });
     setEditingDoc(null);
-    setShowDocModal(false);
+    setDocPreview(null);
   };
 
-  const handleDeleteDoc = (id) => {
-    setDocs(docs.filter((d) => d.id !== id));
-    if (editingDoc && editingDoc.id === id) setEditingDoc(null);
-  };
-
-  // Fungsi pembantu untuk membuka modal
   const openProductModal = (product = null) => {
     if (product) {
-      setEditingProduct(product);
+      setEditingProduct({ ...product, imageFile: null });
+      setProductPreview(product.imageUrl);
     } else {
-      setEditingProduct(null);
-      setNewProduct({ title: "", price: "", img: "" });
+      resetProductForm();
     }
     setShowProductModal(true);
   };
 
   const openDocModal = (doc = null) => {
     if (doc) {
-      setEditingDoc(doc);
+      setEditingDoc({ ...doc, imageFile: null });
+      setDocPreview(doc.imageUrl);
     } else {
-      setEditingDoc(null);
-      setNewDoc({ title: "", subtitle: "", image: "" });
+      resetDocForm();
     }
     setShowDocModal(true);
   };
+
+  const handleProductImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      if (editingProduct) {
+        setEditingProduct({ ...editingProduct, imageFile: file });
+      } else {
+        setNewProduct({ ...newProduct, imageFile: file });
+      }
+      setProductPreview(url);
+    }
+  };
+
+  const handleDocImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      if (editingDoc) {
+        setEditingDoc({ ...editingDoc, imageFile: file });
+      } else {
+        setNewDoc({ ...newDoc, imageFile: file });
+      }
+      setDocPreview(url);
+    }
+  };
+
+  if (loadingProducts || loadingDocs) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 dark:text-white">
+        <p className="text-lg">Memuat data admin...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white p-6">
@@ -142,37 +297,34 @@ const Admin = () => {
           Admin Panel - Mitra Optical
         </h1>
 
-        {/* === BAGIAN PRODUK === */}
+        {/* PRODUK */}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold">Kelola Produk</h2>
             <button
               onClick={() => openProductModal()}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               + Tambah Produk
             </button>
           </div>
-
-          {/* Daftar Produk */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {products.map((product) => (
               <div
-                key={product.id}
+                key={product._id}
                 className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow"
               >
                 <img
-                  src={product.img}
+                  src={product.imageUrl}
                   alt={product.title}
                   className="w-full h-[220px] object-cover"
                 />
                 <div className="p-4">
                   <h3 className="font-semibold">{product.title}</h3>
-                  <p className="text-primary font-bold">
+                  <p className="text-blue-600 font-bold">
                     {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: "IDR",
-                      minimumFractionDigits: 0,
                     }).format(product.price)}
                   </p>
                   <div className="mt-3 flex gap-2">
@@ -183,7 +335,7 @@ const Admin = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
+                      onClick={() => handleDeleteProduct(product._id)}
                       className="text-red-600 dark:text-red-400 text-sm"
                     >
                       Hapus
@@ -195,36 +347,32 @@ const Admin = () => {
           </div>
         </section>
 
-        {/* === BAGIAN DOKUMENTASI === */}
+        {/* DOKUMENTASI */}
         <section>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold">Kelola Dokumentasi</h2>
             <button
               onClick={() => openDocModal()}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               + Tambah Dokumentasi
             </button>
           </div>
-
-          {/* Daftar Dokumentasi */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {docs.map((doc) => (
               <div
-                key={doc.id}
+                key={doc._id}
                 className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow"
               >
-                <div className="overflow-hidden">
-                  <img
-                    src={doc.image}
-                    alt={doc.title}
-                    className="w-full h-[220px] object-cover hover:scale-105 duration-300"
-                  />
-                </div>
+                <img
+                  src={doc.imageUrl}
+                  alt={doc.title}
+                  className="w-full h-[220px] object-cover hover:scale-105 duration-300"
+                />
                 <div className="p-4 space-y-2">
                   <p className="font-bold line-clamp-1">{doc.title}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                    {doc.subtitle}
+                    {doc.description}
                   </p>
                   <div className="mt-3 flex gap-2">
                     <button
@@ -234,7 +382,7 @@ const Admin = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDeleteDoc(doc.id)}
+                      onClick={() => handleDeleteDoc(doc._id)}
                       className="text-red-600 dark:text-red-400 text-sm"
                     >
                       Hapus
@@ -246,7 +394,7 @@ const Admin = () => {
           </div>
         </section>
 
-        {/* === MODAL PRODUK === */}
+        {/* MODAL PRODUK */}
         {showProductModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl">
@@ -263,9 +411,7 @@ const Admin = () => {
                   <input
                     type="text"
                     placeholder="Nama Produk"
-                    value={
-                      editingProduct ? editingProduct.title : newProduct.title
-                    }
+                    value={editingProduct?.title || newProduct.title}
                     onChange={(e) =>
                       editingProduct
                         ? setEditingProduct({
@@ -281,10 +427,8 @@ const Admin = () => {
                   />
                   <input
                     type="number"
-                    placeholder="Harga (angka saja)"
-                    value={
-                      editingProduct ? editingProduct.price : newProduct.price
-                    }
+                    placeholder="Harga"
+                    value={editingProduct?.price || newProduct.price}
                     onChange={(e) =>
                       editingProduct
                         ? setEditingProduct({
@@ -298,37 +442,31 @@ const Admin = () => {
                     }
                     className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
                   />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          if (editingProduct) {
-                            setEditingProduct({
-                              ...editingProduct,
-                              img: reader.result,
-                            });
-                          } else {
-                            setNewProduct({
-                              ...newProduct,
-                              img: reader.result,
-                            });
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="w-full dark:bg-gray-700"
-                  />
+                  <div>
+                    <label className="block text-sm mb-1">Gambar</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProductImageChange}
+                      className="w-full text-sm"
+                    />
+                    {(productPreview ||
+                      (editingProduct && editingProduct.imageUrl)) && (
+                      <div className="mt-2">
+                        <img
+                          src={productPreview || editingProduct.imageUrl}
+                          alt="Preview"
+                          className="w-24 h-24 object-cover rounded border"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button
                       type="submit"
-                      className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
+                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
                     >
-                      {editingProduct ? "Simpan Perubahan" : "Tambah Produk"}
+                      {editingProduct ? "Simpan" : "Tambah"}
                     </button>
                     <button
                       type="button"
@@ -344,7 +482,7 @@ const Admin = () => {
           </div>
         )}
 
-        {/* === MODAL DOKUMENTASI === */}
+        {/* MODAL DOKUMENTASI */}
         {showDocModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl">
@@ -359,7 +497,7 @@ const Admin = () => {
                   <input
                     type="text"
                     placeholder="Judul"
-                    value={editingDoc ? editingDoc.title : newDoc.title}
+                    value={editingDoc?.title || newDoc.title}
                     onChange={(e) =>
                       editingDoc
                         ? setEditingDoc({
@@ -370,48 +508,44 @@ const Admin = () => {
                     }
                     className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
                   />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          if (editingDoc) {
-                            setEditingDoc({
-                              ...editingDoc,
-                              image: reader.result,
-                            });
-                          } else {
-                            setNewDoc({ ...newDoc, image: reader.result });
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="w-full dark:bg-gray-700"
-                  />
                   <textarea
                     placeholder="Deskripsi"
-                    value={editingDoc ? editingDoc.subtitle : newDoc.subtitle}
+                    value={editingDoc?.description || newDoc.description}
                     onChange={(e) =>
                       editingDoc
                         ? setEditingDoc({
                             ...editingDoc,
-                            subtitle: e.target.value,
+                            description: e.target.value,
                           })
-                        : setNewDoc({ ...newDoc, subtitle: e.target.value })
+                        : setNewDoc({ ...newDoc, description: e.target.value })
                     }
                     rows="3"
                     className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
                   />
+                  <div>
+                    <label className="block text-sm mb-1">Gambar</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleDocImageChange}
+                      className="w-full text-sm"
+                    />
+                    {(docPreview || (editingDoc && editingDoc.imageUrl)) && (
+                      <div className="mt-2">
+                        <img
+                          src={docPreview || editingDoc.imageUrl}
+                          alt="Preview"
+                          className="w-24 h-24 object-cover rounded border"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-3 pt-2">
                     <button
                       type="submit"
-                      className="bg-primary text-white px-6 py-2 rounded hover:bg-opacity-90"
+                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
                     >
-                      {editingDoc ? "Simpan Perubahan" : "Tambah Dokumentasi"}
+                      {editingDoc ? "Simpan" : "Tambah"}
                     </button>
                     <button
                       type="button"

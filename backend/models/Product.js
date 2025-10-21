@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    description: { type: String },
+    title: { type: String, required: true },
     price: { type: Number, required: true },
-    image: { type: String }, // URL dari Cloudinary
+    imageUrl: { type: String, required: true },
+    publicId: { type: String, required: true }, // ← tambahkan ini jika belum
   },
   { timestamps: true }
 );

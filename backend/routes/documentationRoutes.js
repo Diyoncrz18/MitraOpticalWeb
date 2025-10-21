@@ -1,5 +1,5 @@
+// backend/routes/documentationRoutes.js
 import express from "express";
-import multer from "multer";
 import {
   createDocumentation,
   getDocumentations,
@@ -9,31 +9,10 @@ import {
 
 const router = express.Router();
 
-// 🔹 Setup multer untuk upload sementara
-const upload = multer({ dest: "uploads/" });
-
-/* ===========================================================
-   🟩 CREATE - Tambah dokumentasi baru
-   Endpoint: POST /api/documentations
-=========================================================== */
-router.post("/", upload.single("image"), createDocumentation);
-
-/* ===========================================================
-   🟨 READ - Ambil semua dokumentasi
-   Endpoint: GET /api/documentations
-=========================================================== */
+// ❌ TIDAK ADA multer di sini!
+router.post("/", createDocumentation);
 router.get("/", getDocumentations);
-
-/* ===========================================================
-   🟦 UPDATE - Edit dokumentasi berdasarkan ID
-   Endpoint: PUT /api/documentations/:id
-=========================================================== */
-router.put("/:id", upload.single("image"), updateDocumentation);
-
-/* ===========================================================
-   🟥 DELETE - Hapus dokumentasi berdasarkan ID
-   Endpoint: DELETE /api/documentations/:id
-=========================================================== */
+router.put("/:id", updateDocumentation);
 router.delete("/:id", deleteDocumentation);
 
 export default router;
