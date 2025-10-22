@@ -6,6 +6,7 @@ import Category2 from "./components/Category/Category2";
 import Banner from "./components/Banner/Banner";
 import Products from "./components/Products/Products";
 import Admin from "./Admin/admin.jsx";
+import Login from "./admin/Login.jsx"; // ✅ Import Login
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -14,9 +15,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 import headphone from "./assets/hero/headphone.png";
 import watch from "./assets/category/macbook.png";
-import Blogs from "./components/Blogs/Blogs";
+import Blogs from "./components/Blogs/Blogs"; 
 import Footer from "./components/Footer/Footer";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // ✅ Tambahkan Navigate
 
 const BannerData = {
   discount: "Hemat 10%",
@@ -44,12 +45,14 @@ const BannerData2 = {
 const App = () => {
   const [orderPopup, setOrderPopup] = React.useState(false);
   const [loginPopup, setLoginPopup] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(() => {
+    // Cek login saat pertama kali render
+    return !!localStorage.getItem("token");
+  });
   const [cartCount, setCartCount] = React.useState(0);
   const [cartItems, setCartItems] = React.useState([]);
   const [showCart, setShowCart] = React.useState(false);
 
-  // 🔹 Tambah state untuk popup pemesanan detail
   const [selectedProduct, setSelectedProduct] = React.useState(null);
   const [orderFormData, setOrderFormData] = React.useState({
     name: "",
@@ -57,7 +60,12 @@ const App = () => {
     phone: "",
   });
 
-  // 🔹 Fungsi baru: buka popup pemesanan dengan produk tertentu
+  // Sinkronkan status login dengan localStorage
+  React.useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
   const handleOrderPopup = (product = null) => {
     if (!isLoggedIn) {
       setLoginPopup(true);
@@ -65,24 +73,32 @@ const App = () => {
     }
 
     if (product) {
-      // Jika diklik dari tombol "Pesan" di produk
       setSelectedProduct(product);
       setOrderFormData({ name: "", address: "", phone: "" });
       setOrderPopup(true);
     } else {
-      // Jika diklik dari navbar (opsional, bisa diabaikan)
       setOrderPopup(!orderPopup);
     }
   };
 
   const handleLoginPopup = () => {
-    setLoginPopup(!loginPopup);
+    if (!isLoggedIn) {
+      setLoginPopup(true);
+    }
   };
 
   const handleLogin = () => {
     setIsLoggedIn(true);
     setLoginPopup(false);
     toast.success("Logged in successfully!");
+  };
+
+  // 🔐 Fungsi logout global (bisa dipanggil dari Admin)
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    toast.info("You have been logged out.");
   };
 
   const addToCart = (product, quantity) => {
@@ -121,7 +137,6 @@ const App = () => {
     }
   };
 
-  // 🔹 Kirim pesanan
   const handleSubmitOrder = (e) => {
     e.preventDefault();
     const { name, address, phone } = orderFormData;
@@ -130,7 +145,6 @@ const App = () => {
       return;
     }
 
-    // 👉 Di sini kamu bisa kirim ke API
     console.log("Pesanan:", {
       product: selectedProduct,
       customer: orderFormData,
@@ -141,7 +155,6 @@ const App = () => {
     setSelectedProduct(null);
   };
 
-  // 🔹 Tutup popup
   const handleCloseOrderPopup = () => {
     setOrderPopup(false);
     setSelectedProduct(null);
@@ -157,22 +170,35 @@ const App = () => {
     AOS.refresh();
   }, []);
 
+  // 🔒 Komponen pembungkus untuk route admin
+  const ProtectedAdminRoute = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return <Navigate to="/login" replace />;
+    }
+    return <Admin onLogout={handleLogout} />;
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 dark:text-white duration-200 overflow-hidden">
-      <Navbar
-        handleLoginPopup={handleLoginPopup}
-        isLoggedIn={isLoggedIn}
-        cartCount={cartCount}
-        cartItems={cartItems}
-        removeFromCart={removeFromCart}
-        showCart={showCart}
-        setShowCart={setShowCart}
-        orderPopup={orderPopup}
-        setOrderPopup={setOrderPopup}
-        handleOrderPopup={handleOrderPopup}
-      />
+      {/* Hanya tampilkan Navbar di halaman publik */}
+      {!window.location.pathname.startsWith("/admin") && !window.location.pathname.startsWith("/login") && (
+        <Navbar
+          handleLoginPopup={handleLoginPopup}
+          isLoggedIn={isLoggedIn}
+          cartCount={cartCount}
+          cartItems={cartItems}
+          removeFromCart={removeFromCart}
+          showCart={showCart}
+          setShowCart={setShowCart}
+          orderPopup={orderPopup}
+          setOrderPopup={setOrderPopup}
+          handleOrderPopup={handleOrderPopup}
+        />
+      )}
 
       <Routes>
+        {/* Halaman utama */}
         <Route
           path="/"
           element={
@@ -182,8 +208,6 @@ const App = () => {
               <Category2 />
               <Banner data={BannerData} />
               <Products
-                orderPopup={orderPopup}
-                // 🔹 Pastikan Products menerima handleOrderPopup yang bisa terima argumen
                 handleOrderPopup={handleOrderPopup}
                 isLoggedIn={isLoggedIn}
                 handleLoginPopup={handleLoginPopup}
@@ -196,10 +220,23 @@ const App = () => {
             </>
           }
         />
-        <Route path="/admin" element={<Admin />} />
+
+        {/* Login */}
+        <Route
+          path="/login"
+          element={
+            <Login
+              onLogin={handleLogin}
+              setIsLoggedIn={setIsLoggedIn}
+            />
+          }
+        />
+
+        {/* Admin (dilindungi) */}
+        <Route path="/admin" element={<ProtectedAdminRoute />} />
       </Routes>
 
-      {/* 🔹 POPUP PEMESANAN */}
+      {/* Popup Pemesanan */}
       {orderPopup && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md p-6 relative">

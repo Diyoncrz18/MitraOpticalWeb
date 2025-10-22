@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Admin = () => {
+  const navigate = useNavigate();
+
+  // Cek apakah user sudah login
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
+
   // === PRODUK ===
   const [products, setProducts] = useState([]);
   const [newProduct, setNewProduct] = useState({
@@ -60,7 +71,7 @@ const Admin = () => {
       });
       return {
         url: res.data.url,
-        publicId: res.data.publicId, // ✅ camelCase
+        publicId: res.data.publicId,
       };
     } catch (err) {
       console.error("Upload gagal:", err);
@@ -85,7 +96,7 @@ const Admin = () => {
         title: newProduct.title,
         price: Number(newProduct.price),
         imageUrl: imageResult.url,
-        publicId: imageResult.publicId, // ✅ kirim publicId
+        publicId: imageResult.publicId,
       };
       const res = await axios.post(`${API_BASE}/products`, productData);
       setProducts([...products, res.data]);
@@ -163,7 +174,7 @@ const Admin = () => {
         title: newDoc.title,
         description: newDoc.description,
         imageUrl: imageResult.url,
-        publicId: imageResult.publicId, // ✅ wajib!
+        publicId: imageResult.publicId,
       };
       const res = await axios.post(`${API_BASE}/documentations`, docData);
       setDocs([...docs, res.data]);
@@ -282,6 +293,13 @@ const Admin = () => {
     }
   };
 
+  // 🔐 Handle Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login", { replace: true });
+  };
+
   if (loadingProducts || loadingDocs) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 dark:text-white">
@@ -292,6 +310,14 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 dark:text-white p-6">
+      {/* 🔒 Tombol Logout */}
+      <button
+        onClick={handleLogout}
+        className="absolute top-4 right-6 bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700 text-sm"
+      >
+        Logout
+      </button>
+
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-10">
           Admin Panel - Mitra Optical
@@ -325,6 +351,7 @@ const Admin = () => {
                     {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: "IDR",
+                      minimumFractionDigits: 0,
                     }).format(product.price)}
                   </p>
                   <div className="mt-3 flex gap-2">
